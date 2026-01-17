@@ -3,4 +3,9 @@ project(nesquik C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(nesquik main.c)
+add_executable(nesquik main.c
+        src/list/list.c
+        src/hash/hash.c
+        src/hash/hashtable.c)
+
+target_include_directories(nesquik PUBLIC include)
