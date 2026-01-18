@@ -4,19 +4,12 @@
 #include "hash/hash.h"
 #include "hash/hashset.h"
 
-u8 HASHSET_init(HASHSET* hashset,
-                const u32 capacity,
-                u32 (*key_size)(const char*),
-                u8 (*key_equal)(const char*, const char*)) {
-
+u8 HASHSET_init(HASHSET* hashset, const u32 capacity) {
     if (hashset == NULL) return 0;
 
     hashset->size = 0;
     hashset->capacity = capacity < HASHSET_MIN_CAPACITY ? HASHSET_MIN_CAPACITY : capacity;
     hashset->tombstones = 0;
-
-    hashset->key_size = key_size;
-    hashset->key_equal = key_equal;
 
     hashset->entries = (HASHSET_ENTRY*)malloc(sizeof(HASHSET_ENTRY) * capacity);
     if (hashset->entries == NULL) {
@@ -29,14 +22,11 @@ u8 HASHSET_init(HASHSET* hashset,
     return 1;
 }
 
-HASHSET* HASHSET_create(const u32 capacity,
-    u32 (*key_size)(const char*),
-    u8 (*key_equal)(const char* a, const char* b)) {
-
+HASHSET* HASHSET_create(const u32 capacity) {
     HASHSET* hashset = (HASHSET*)malloc(sizeof(HASHSET));
     if (hashset == NULL) return NULL;
 
-    const u8 r = HASHSET_init(hashset, capacity, key_size, key_equal);
+    const u8 r = HASHSET_init(hashset, capacity);
     if (r == 0) {
         free(hashset);
         return NULL;
@@ -50,9 +40,6 @@ void HASHSET_deinit(HASHSET* hashset) {
     hashset->size = 0;
     hashset->capacity = 0;
     hashset->tombstones = 0;
-
-    hashset->key_size = NULL;
-    hashset->key_equal = NULL;
 
     if (hashset->entries != NULL) {
         free(hashset->entries);
@@ -74,7 +61,7 @@ u8 HASHSET_grow(HASHSET* hashset) {
     new_capacity = (new_capacity > hashset->capacity) ? new_capacity : hashset->capacity;
 
     HASHSET new_hashset;
-    u8 r = HASHSET_init(&new_hashset, new_capacity, hashset->key_size, hashset->key_equal);
+    u8 r = HASHSET_init(&new_hashset, new_capacity);
     if (r == 0) return 0;
 
     for (u32 i = 0; i < hashset->capacity; i++) {
@@ -97,7 +84,7 @@ u8 HASHSET_grow(HASHSET* hashset) {
     return 1;
 }
 
-u8 HASHSET_quick_add(HASHSET* hashset, const u32 hash, char* key) {
+u8 HASHSET_quick_add(HASHSET* hashset, const u32 hash, const u32 key) {
     if (hashset == NULL) return 0;
 
     if ((hashset->size + 0.0) / hashset->capacity >= HASHSET_MAX_LOAD_FACTOR) {
@@ -109,16 +96,15 @@ u8 HASHSET_quick_add(HASHSET* hashset, const u32 hash, char* key) {
 
     HASHSET_ENTRY* found_entry = NULL;
     do {
-        HASHSET_ENTRY* curr_entry = hashset->entries + i;
-        const u8 status = curr_entry->status;
+        HASHSET_ENTRY* entry = hashset->entries + i;
+        const u8 status = entry->status;
 
         if (status == HASHSET_ENTRY_STATUS_EMPTY || status == HASHSET_ENTRY_STATUS_TOMBSTONE) {
-            found_entry = curr_entry;
+            found_entry = entry;
             break;
         }
 
-        const u8 equal = hashset->key_equal(curr_entry->key, key);
-        if (equal == 1) break;
+        if (entry->key == key) break;
         i = (i + 1) % hashset->capacity;
     } while (i != hash % hashset->capacity);
 
@@ -132,16 +118,14 @@ u8 HASHSET_quick_add(HASHSET* hashset, const u32 hash, char* key) {
     return 1;
 }
 
-u8 HASHSET_add(HASHSET* hashset, char* key) {
+u8 HASHSET_add(HASHSET* hashset, const u32 key) {
     if (hashset == NULL) return 0;
 
-    const u32 key_size = hashset->key_size(key);
-    const u32 hash = HASH_fnv1a((u8*)key, key_size);
-
+    const u32 hash = HASH_fnv1a((u8*)(&key), sizeof(key));
     return HASHSET_quick_add(hashset, hash, key);
 }
 
-void HASHSET_remove(HASHSET* hashset, const char* key) {
+void HASHSET_remove(HASHSET* hashset, const u32 key) {
     if (hashset == NULL) return;
 
     HASHSET_ENTRY* entry = HASHSET_find(hashset, key);
@@ -153,10 +137,50 @@ void HASHSET_remove(HASHSET* hashset, const char* key) {
     hashset->tombstones++;
 }
 
-HASHSET* HASHSET_union(const HASHSET* a, const HASHSET* b) {
-    if (a == NULL || b == NULL || (a->key_size != b->key_size) || (a->key_equal != b->key_equal)) return NULL;
+u32 HASHSET_hash(const u8* data, const u32 size) {
+    return HASH_fnv1a(data, size);
+}
 
-    HASHSET* c = HASHSET_create(a->capacity + b->capacity, a->key_size, a->key_equal);
+u8 HASHSET_contains(const HASHSET* hashset, const u32 key) {
+    if (hashset == NULL) return 0;
+
+    const HASHSET_ENTRY* entry = HASHSET_find(hashset, key);
+    if (entry == NULL) return 0;
+    return 1;
+}
+
+HASHSET_ENTRY* HASHSET_find(const HASHSET* hashset, const u32 key) {
+    if (hashset == NULL) return NULL;
+
+    // Determine the key_size
+    const u32 hash = HASH_fnv1a((u8*)(&key), sizeof(key));
+    u32 i = hash % hashset->capacity;
+
+    HASHSET_ENTRY* entry;
+    u8 status;
+
+    do {
+        entry = hashset->entries + i;
+        status = entry->status;
+
+        if (status == HASHSET_ENTRY_STATUS_EMPTY) return NULL;
+        if (status == HASHSET_ENTRY_STATUS_TOMBSTONE || entry->hash != hash) {
+            i = (i + 1) % hashset->capacity;
+            continue;
+        }
+
+        if (entry->key == key) break;
+        i = (i + 1) % hashset->capacity;
+    } while (i != hash % hashset->capacity);
+
+    if (status == HASHSET_ENTRY_STATUS_FILLED) return entry;
+    return NULL;
+}
+
+HASHSET* HASHSET_union(const HASHSET* a, const HASHSET* b) {
+    if (a == NULL || b == NULL) return NULL;
+
+    HASHSET* c = HASHSET_create(a->capacity + b->capacity);
     if (c == NULL) return NULL;
 
     for (u32 ai = 0; ai < a->capacity; ai++) {
@@ -175,7 +199,7 @@ HASHSET* HASHSET_union(const HASHSET* a, const HASHSET* b) {
 }
 
 HASHSET* HASHSET_intersection(const HASHSET* a, const HASHSET* b) {
-    if (a == NULL || b == NULL || (a->key_size != b->key_size) || (a->key_equal != b->key_equal)) return NULL;
+    if (a == NULL || b == NULL) return NULL;
 
     const HASHSET* smaller;
     const HASHSET* larger;
@@ -188,7 +212,7 @@ HASHSET* HASHSET_intersection(const HASHSET* a, const HASHSET* b) {
         larger = a;
     }
 
-    HASHSET* c = HASHSET_create(smaller->capacity, smaller->key_size, smaller->key_equal);
+    HASHSET* c = HASHSET_create(smaller->capacity);
     if (c == NULL) return NULL;
 
     for (u32 i = 0; i < smaller->capacity; i++) {
@@ -204,9 +228,9 @@ HASHSET* HASHSET_intersection(const HASHSET* a, const HASHSET* b) {
 }
 
 HASHSET* HASHSET_difference(const HASHSET* a, const HASHSET* b) {
-    if (a == NULL || b == NULL || (a->key_size != b->key_size) || (a->key_equal != b->key_equal)) return NULL;
+    if (a == NULL || b == NULL) return NULL;
 
-    HASHSET* c = HASHSET_create(a->capacity, a->key_size, a->key_equal);
+    HASHSET* c = HASHSET_create(a->capacity);
     if (c == NULL) return NULL;
 
     for (u32 ai = 0; ai < a->capacity; ai++) {
@@ -219,47 +243,4 @@ HASHSET* HASHSET_difference(const HASHSET* a, const HASHSET* b) {
     }
 
     return c;
-}
-
-u32 HASHSET_hash(const u8* data, const u32 size) {
-    return HASH_fnv1a(data, size);
-}
-
-u8 HASHSET_contains(const HASHSET* hashset, const char* key) {
-    if (hashset == NULL) return 0;
-
-    const HASHSET_ENTRY* entry = HASHSET_find(hashset, key);
-    if (entry == NULL) return 0;
-    return 1;
-}
-
-HASHSET_ENTRY* HASHSET_find(const HASHSET* hashset, const char* key) {
-    if (hashset == NULL) return NULL;
-
-    // Determine the key_size
-    const u32 key_size = hashset->key_size(key);
-    const u32 hash = HASH_fnv1a((u8*)key, key_size);
-
-    u32 i = hash % hashset->capacity;
-
-    HASHSET_ENTRY* entry;
-    u8 status;
-
-    do {
-        entry = hashset->entries + i;
-        status = entry->status;
-
-        if (status == HASHSET_ENTRY_STATUS_EMPTY) return NULL;
-        if (status == HASHSET_ENTRY_STATUS_TOMBSTONE || entry->hash != hash) {
-            i = (i + 1) % hashset->capacity;
-            continue;
-        }
-
-        const u8 equal = hashset->key_equal(entry->key, key);
-        if (equal == 1) break;
-        i = (i + 1) % hashset->capacity;
-    } while (i != hash % hashset->capacity);
-
-    if (status == HASHSET_ENTRY_STATUS_FILLED) return entry;
-    return NULL;
 }

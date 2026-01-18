@@ -4,19 +4,13 @@
 #include "hash/hash.h"
 #include "hash/hashtable.h"
 
-u8 HASHTABLE_init(HASHTABLE* hashtable,
-                const u32 capacity,
-                u32 (*key_size)(const char*),
-                u8 (*key_equal)(const char*, const char*)) {
+u8 HASHTABLE_init(HASHTABLE* hashtable, const u32 capacity) {
 
     if (hashtable == NULL) return 0;
 
     hashtable->size = 0;
     hashtable->capacity = capacity < HASHTABLE_MIN_CAPACITY ? HASHTABLE_MIN_CAPACITY : capacity;
     hashtable->tombstones = 0;
-
-    hashtable->key_size = key_size;
-    hashtable->key_equal = key_equal;
 
     hashtable->entries = (HASHTABLE_ENTRY*)malloc(sizeof(HASHTABLE_ENTRY) * capacity);
     if (hashtable->entries == NULL) {
@@ -29,14 +23,12 @@ u8 HASHTABLE_init(HASHTABLE* hashtable,
     return 1;
 }
 
-HASHTABLE* HASHTABLE_create(const u32 capacity,
-    u32 (*key_size)(const char*),
-    u8 (*key_equal)(const char* a, const char* b)) {
+HASHTABLE* HASHTABLE_create(const u32 capacity) {
 
     HASHTABLE* hashtable = (HASHTABLE*)malloc(sizeof(HASHTABLE));
     if (hashtable == NULL) return NULL;
 
-    const u8 r = HASHTABLE_init(hashtable, capacity, key_size, key_equal);
+    const u8 r = HASHTABLE_init(hashtable, capacity);
     if (r == 0) {
         free(hashtable);
         return NULL;
@@ -50,9 +42,6 @@ void HASHTABLE_deinit(HASHTABLE* hashtable) {
     hashtable->size = 0;
     hashtable->capacity = 0;
     hashtable->tombstones = 0;
-
-    hashtable->key_size = NULL;
-    hashtable->key_equal = NULL;
 
     if (hashtable->entries != NULL) {
         free(hashtable->entries);
@@ -74,7 +63,7 @@ u8 HASHTABLE_grow(HASHTABLE* hashtable) {
     new_capacity = (new_capacity > hashtable->capacity) ? new_capacity : hashtable->capacity;
 
     HASHTABLE new_hashtable;
-    u8 r = HASHTABLE_init(&new_hashtable, new_capacity, hashtable->key_size, hashtable->key_equal);
+    u8 r = HASHTABLE_init(&new_hashtable, new_capacity);
     if (r == 0) return 0;
 
     for (u32 i = 0; i < hashtable->capacity; i++) {
@@ -97,7 +86,7 @@ u8 HASHTABLE_grow(HASHTABLE* hashtable) {
     return 1;
 }
 
-u8 HASHTABLE_quick_add(HASHTABLE* hashtable, const u32 hash, char* key, char* value) {
+u8 HASHTABLE_quick_add(HASHTABLE* hashtable, const u32 hash, const u32 key, const u32 value) {
     if (hashtable == NULL) return 0;
 
     if ((hashtable->size + 0.0) / hashtable->capacity >= HASHTABLE_MAX_LOAD_FACTOR) {
@@ -109,16 +98,15 @@ u8 HASHTABLE_quick_add(HASHTABLE* hashtable, const u32 hash, char* key, char* va
 
     HASHTABLE_ENTRY* found_entry = NULL;
     do {
-        HASHTABLE_ENTRY* curr_entry = hashtable->entries + i;
-        const u8 status = curr_entry->status;
+        HASHTABLE_ENTRY* entry = hashtable->entries + i;
+        const u8 status = entry->status;
 
         if (status == HASHTABLE_ENTRY_STATUS_EMPTY || status == HASHTABLE_ENTRY_STATUS_TOMBSTONE) {
-            found_entry = curr_entry;
+            found_entry = entry;
             break;
         }
 
-        const u8 equal = hashtable->key_equal(curr_entry->key, key);
-        if (equal == 1) break;
+        if (entry->key == key) break;
         i = (i + 1) % hashtable->capacity;
     } while (i != hash % hashtable->capacity);
 
@@ -133,16 +121,14 @@ u8 HASHTABLE_quick_add(HASHTABLE* hashtable, const u32 hash, char* key, char* va
     return 1;
 }
 
-u8 HASHTABLE_add(HASHTABLE* hashtable, char* key, char* value) {
+u8 HASHTABLE_add(HASHTABLE* hashtable, const u32 key, const u32 value) {
     if (hashtable == NULL) return 0;
 
-    const u32 key_size = hashtable->key_size(key);
-    const u32 hash = HASH_fnv1a((u8*)key, key_size);
-
+    const u32 hash = HASH_fnv1a((u8*)(&key), sizeof(key));
     return HASHTABLE_quick_add(hashtable, hash, key, value);
 }
 
-void HASHTABLE_remove(HASHTABLE* hashtable, const char* key) {
+void HASHTABLE_remove(HASHTABLE* hashtable, const u32 key) {
     if (hashtable == NULL) return;
 
     HASHTABLE_ENTRY* entry = HASHTABLE_find(hashtable, key);
@@ -158,7 +144,7 @@ u32 HASHTABLE_hash(const u8* data, const u32 size) {
     return HASH_fnv1a(data, size);
 }
 
-u8 HASHTABLE_contains(const HASHTABLE* hashtable, const char* key) {
+u8 HASHTABLE_contains(const HASHTABLE* hashtable, const u32 key) {
     if (hashtable == NULL) return 0;
 
     const HASHTABLE_ENTRY* entry = HASHTABLE_find(hashtable, key);
@@ -166,13 +152,11 @@ u8 HASHTABLE_contains(const HASHTABLE* hashtable, const char* key) {
     return 1;
 }
 
-HASHTABLE_ENTRY* HASHTABLE_find(const HASHTABLE* hashtable, const char* key) {
+HASHTABLE_ENTRY* HASHTABLE_find(const HASHTABLE* hashtable, const u32 key) {
     if (hashtable == NULL) return NULL;
 
     // Determine the key_size
-    const u32 key_size = hashtable->key_size(key);
-    const u32 hash = HASH_fnv1a((u8*)key, key_size);
-
+    const u32 hash = HASH_fnv1a((u8*)(&key), sizeof(key));
     u32 i = hash % hashtable->capacity;
 
     HASHTABLE_ENTRY* entry;
@@ -188,8 +172,7 @@ HASHTABLE_ENTRY* HASHTABLE_find(const HASHTABLE* hashtable, const char* key) {
             continue;
         }
 
-        const u8 equal = hashtable->key_equal(entry->key, key);
-        if (equal == 1) break;
+        if (entry->key == key) break;
         i = (i + 1) % hashtable->capacity;
     } while (i != hash % hashtable->capacity);
 
