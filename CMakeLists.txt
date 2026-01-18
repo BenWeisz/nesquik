@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 11)
 add_executable(nesquik main.c
         src/list/list.c
         src/hash/hash.c
-        src/hash/hashtable.c)
+        src/hash/hashtable.c
+        src/hash/hashset.c)
 
 target_include_directories(nesquik PUBLIC include)

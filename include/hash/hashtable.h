@@ -1,8 +1,6 @@
 #ifndef NESQUIK_HASHTABLE_H
 #define NESQUIK_HASHTABLE_H
 
-#include <stdlib.h>
-
 #include "types.h"
 
 #define HASHTABLE_ENTRY_STATUS_EMPTY      0
@@ -55,4 +53,4 @@ u32 HASHTABLE_hash(const u8* data, u32 size);
 u8 HASHTABLE_contains(const HASHTABLE* hashtable, const char* key);
 HASHTABLE_ENTRY* HASHTABLE_find(const HASHTABLE* hashtable, const char* key);
 
-#endif //NESQUIK_HASHTABLE_H
+#endif // NESQUIK_HASHTABLE_H

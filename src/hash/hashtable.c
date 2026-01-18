@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 
 #include "hash/hash.h"
 #include "hash/hashtable.h"
@@ -108,7 +109,7 @@ u8 HASHTABLE_quick_add(HASHTABLE* hashtable, const u32 hash, char* key, char* va
 
     HASHTABLE_ENTRY* found_entry = NULL;
     do {
-        HASHTABLE_ENTRY *curr_entry = hashtable->entries + i;
+        HASHTABLE_ENTRY* curr_entry = hashtable->entries + i;
         const u8 status = curr_entry->status;
 
         if (status == HASHTABLE_ENTRY_STATUS_EMPTY || status == HASHTABLE_ENTRY_STATUS_TOMBSTONE) {
@@ -116,6 +117,8 @@ u8 HASHTABLE_quick_add(HASHTABLE* hashtable, const u32 hash, char* key, char* va
             break;
         }
 
+        const u8 equal = hashtable->key_equal(curr_entry->key, key);
+        if (equal == 1) break;
         i = (i + 1) % hashtable->capacity;
     } while (i != hash % hashtable->capacity);
 
