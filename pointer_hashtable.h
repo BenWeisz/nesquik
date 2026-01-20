@@ -122,7 +122,7 @@ u32 HASH_fnv1a(const u8* data, const u32 size) {
                                                                                                                                             	\
 	POINTER_HASHTABLE_##K##_##V* POINTER_HASHTABLE_##K##_##V##_create(const u32 capacity,                                                      	\
 	    u32 (*key_size)(const K*),                                                                                                          	\
-	    u8 (*key_equal)(const K*, const K*)) {                                                                                           	\
+	    u8 (*key_equal)(const K*, const K*)) {                                                                                           		\
                                                                                                                                             	\
 	    POINTER_HASHTABLE_##K##_##V* hashtable = (POINTER_HASHTABLE_##K##_##V*)malloc(sizeof(POINTER_HASHTABLE_##K##_##V));                    	\
 	    if (hashtable == NULL) return NULL;                                                                                                    	\
