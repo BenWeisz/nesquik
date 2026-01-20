@@ -35,7 +35,7 @@ typedef double f64;
 	typedef struct HASHSET_##K##_ENTRY {                                                                       	\
 	    u8 status;                                                                                             	\
 	    u32 hash;                                                                                              	\
-	    u32 key;                                                                                               	\
+	    K key;                                                                                               	\
 	} HASHSET_##K##_ENTRY;                                                                                     	\
                                                                                                             	\
 	typedef struct HASHSET_##K {                                                                               	\
