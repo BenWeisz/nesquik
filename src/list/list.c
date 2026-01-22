@@ -6,7 +6,7 @@ u8 LIST_init(LIST* list, u32 capacity) {
     if (list == NULL) return 0;
 
     list->size = 0;
-    list->capacity = capacity < 8 ? 8 : capacity;
+    list->capacity = capacity < LIST_MIN_CAPACITY ? LIST_MIN_CAPACITY : capacity;
 
     list->data = (u8*)malloc(sizeof(u8) * list->capacity);
     if (list->data == NULL) {
@@ -17,7 +17,7 @@ u8 LIST_init(LIST* list, u32 capacity) {
     return 1;
 }
 
-LIST* LIST_create(u32 capacity) {
+LIST* LIST_create(const u32 capacity) {
     LIST* list = (LIST*)malloc(sizeof(LIST));
     if (list == NULL) {
         return NULL;
@@ -57,7 +57,7 @@ u8 LIST_grow_capacity(LIST* list) {
 
     u32 capacity = 0;
     if (list->capacity == 0) {
-        capacity = 8;
+        capacity = LIST_MIN_CAPACITY;
     }
     else if (list->capacity & (1 << 31)) capacity = 0xFFFFFFFF;
     else {

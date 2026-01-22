@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+#define LIST_MIN_CAPACITY 8
+
 typedef struct LIST {
     u32 size;
     u32 capacity;
