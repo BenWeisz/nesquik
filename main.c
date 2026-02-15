@@ -1,28 +1,53 @@
-#include "hash/pointer_hashset.h"
-#include <string.h>
 #include <stdio.h>
+#include "state_machine/state_machine.h"
 
-u32 key_size(const char* a) {
-    return strlen(a);
+STATE_CREATE(START, STATE_TYPE_START)
+STATE_CREATE(MID, STATE_TYPE_INTERNAL)
+STATE_CREATE(END, STATE_TYPE_END)
+STATE_CREATE(ERROR, STATE_TYPE_END)
+
+STATE* START_transition(u8* buf, u32 buf_len, void* context) {
+    if (context == NULL) return NULL;
+    u32 i = *(u32*)context;
+
+    if (i == buf_len) return &END;
+    if (i > buf_len) return &ERROR;
+
+    if (buf[i] == 'm') {
+        *(u32*)context = i + 1;
+        return &MID;
+    }
+
+    return &START;
 }
 
-u8 key_equal(const char* a, const char* b) {
-    if (strcmp(a, b) == 0) return 1;
-    return 0;
+STATE* MID_transition(u8* buf, u32 buf_len, void* context) {
+    if (context == NULL) return NULL;
+    u32 i = *(u32*)context;
+
+    if (i == buf_len) return &END;
+    if (i > buf_len) return &ERROR;
+    if (buf[i] == 'e') {
+        *(u32*)context = i + 1;
+        return &END;
+    }
+
+    return &MID;
 }
 
 int main(void) {
-    POINTER_HASHSET* a = POINTER_HASHSET_create(10, key_size, key_equal);
+    const char* test = "me";
+    u32 context = 0;
 
-    POINTER_HASHSET_add(a, "a");
-    POINTER_HASHSET_add(a, "a");
-    POINTER_HASHSET_add(a, "b");
-    POINTER_HASHSET_add(a, "c");
-    POINTER_HASHSET_add(a, "a");
+    STATE_MACHINE* machine = STATE_MACHINE_create((u8*)test, 2, &context);
+    STATE_MACHINE_add_state(machine, &START, START_transition);
+    STATE_MACHINE_add_state(machine, &MID, MID_transition);
+    STATE_MACHINE_add_state(machine, &END, NULL);
+    STATE_MACHINE_add_state(machine, &ERROR, NULL);
 
-    printf("%d\n", a->size);
+    STATE* r = STATE_MACHINE_run(machine);
 
-    POINTER_HASHSET_destroy(a);
+    STATE_MACHINE_destroy(machine);
 
     return 0;
 }
