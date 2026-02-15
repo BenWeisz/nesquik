@@ -2,7 +2,7 @@
 #define NESQUIK_STATE_MACHINE_H
 
 #include "types.h"
-#include "pointer_hashtable.h"
+#include "hash/pointer_hashtable.h"
 
 typedef struct {
     char* name;
