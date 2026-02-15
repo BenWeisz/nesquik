@@ -97,7 +97,7 @@ u8 POINTER_HASHTABLE_grow(POINTER_HASHTABLE* hashtable) {
     return 1;
 }
 
-u8 POINTER_HASHTABLE_quick_add(POINTER_HASHTABLE* hashtable, const u32 hash, char* key, char* value) {
+u8 POINTER_HASHTABLE_quick_add(POINTER_HASHTABLE* hashtable, const u32 hash, char* key, u32 value) {
     if (hashtable == NULL) return 0;
 
     if ((hashtable->size + 0.0) / hashtable->capacity >= POINTER_HASHTABLE_MAX_LOAD_FACTOR) {
@@ -133,7 +133,7 @@ u8 POINTER_HASHTABLE_quick_add(POINTER_HASHTABLE* hashtable, const u32 hash, cha
     return 1;
 }
 
-u8 POINTER_HASHTABLE_add(POINTER_HASHTABLE* hashtable, char* key, char* value) {
+u8 POINTER_HASHTABLE_add(POINTER_HASHTABLE* hashtable, char* key, u32 value) {
     if (hashtable == NULL) return 0;
 
     const u32 key_size = hashtable->key_size(key);

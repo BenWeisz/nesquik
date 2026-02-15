@@ -18,7 +18,7 @@ typedef struct POINTER_HASHTABLE_ENTRY {
     u32 hash;
     // These need to be configured by the macro
     char* key;
-    char* value;
+    u32 value;
 } POINTER_HASHTABLE_ENTRY;
 #pragma pack(pop)
 
@@ -44,8 +44,8 @@ void POINTER_HASHTABLE_deinit(POINTER_HASHTABLE* hashtable);
 void POINTER_HASHTABLE_destroy(POINTER_HASHTABLE* hashtable);
 
 u8 POINTER_HASHTABLE_grow(POINTER_HASHTABLE* hashtable);
-u8 POINTER_HASHTABLE_add(POINTER_HASHTABLE* hashtable, char* key, char* value);
-u8 POINTER_HASHTABLE_quick_add(POINTER_HASHTABLE* hashtable, u32 hash, char* key, char* value);
+u8 POINTER_HASHTABLE_add(POINTER_HASHTABLE* hashtable, char* key, u32 value);
+u8 POINTER_HASHTABLE_quick_add(POINTER_HASHTABLE* hashtable, u32 hash, char* key, u32 value);
 void POINTER_HASHTABLE_remove(POINTER_HASHTABLE* hashtable, const char* key);
 
 u32 POINTER_HASHTABLE_hash(const u8* data, u32 size);
