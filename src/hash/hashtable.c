@@ -4,7 +4,9 @@
 #include "hash/hash.h"
 #include "hash/hashtable.h"
 
-u8 HASHTABLE_init(HASHTABLE* hashtable, const u32 capacity) {
+HASHTABLE_DECLARE(u64, u64)
+
+u8 HASHTABLE_u64_u64_init(HASHTABLE_u64_u64* hashtable, const u32 capacity) {
 
     if (hashtable == NULL) return 0;
 
@@ -12,23 +14,23 @@ u8 HASHTABLE_init(HASHTABLE* hashtable, const u32 capacity) {
     hashtable->capacity = capacity < HASHTABLE_MIN_CAPACITY ? HASHTABLE_MIN_CAPACITY : capacity;
     hashtable->tombstones = 0;
 
-    hashtable->entries = (HASHTABLE_ENTRY*)malloc(sizeof(HASHTABLE_ENTRY) * capacity);
+    hashtable->entries = (HASHTABLE_ENTRY_u64_u64*)malloc(sizeof(HASHTABLE_ENTRY_u64_u64) * capacity);
     if (hashtable->entries == NULL) {
         hashtable->capacity = 0;
         return 0;
     }
 
-    memset(hashtable->entries, 0, sizeof(HASHTABLE_ENTRY) * capacity);
+    memset(hashtable->entries, 0, sizeof(HASHTABLE_ENTRY_u64_u64) * capacity);
 
     return 1;
 }
 
-HASHTABLE* HASHTABLE_create(const u32 capacity) {
+HASHTABLE_u64_u64* HASHTABLE_create(const u32 capacity) {
 
-    HASHTABLE* hashtable = (HASHTABLE*)malloc(sizeof(HASHTABLE));
+    HASHTABLE_u64_u64* hashtable = (HASHTABLE_u64_u64*)malloc(sizeof(HASHTABLE_u64_u64));
     if (hashtable == NULL) return NULL;
 
-    const u8 r = HASHTABLE_init(hashtable, capacity);
+    const u8 r = HASHTABLE_u64_u64_init(hashtable, capacity);
     if (r == 0) {
         free(hashtable);
         return NULL;
@@ -37,7 +39,7 @@ HASHTABLE* HASHTABLE_create(const u32 capacity) {
     return hashtable;
 }
 
-void HASHTABLE_deinit(HASHTABLE* hashtable) {
+void HASHTABLE_u64_u64_deinit(HASHTABLE_u64_u64* hashtable) {
     if (hashtable == NULL) return;
     hashtable->size = 0;
     hashtable->capacity = 0;
@@ -49,31 +51,31 @@ void HASHTABLE_deinit(HASHTABLE* hashtable) {
     }
 }
 
-void HASHTABLE_destroy(HASHTABLE* hashtable) {
+void HASHTABLE_u64_u64_destroy(HASHTABLE_u64_u64* hashtable) {
     if (hashtable == NULL) return;
 
-    HASHTABLE_deinit(hashtable);
+    HASHTABLE_u64_u64_deinit(hashtable);
     free(hashtable);
 }
 
-u8 HASHTABLE_grow(HASHTABLE* hashtable) {
+u8 HASHTABLE_u64_u64_grow(HASHTABLE_u64_u64* hashtable) {
     if (hashtable == NULL) return 0;
 
     u32 new_capacity = (u32)(hashtable->capacity * HASHTABLE_MAX_LOAD_FACTOR / HASHTABLE_MIN_LOAD_FACTOR);
     new_capacity = (new_capacity > hashtable->capacity) ? new_capacity : hashtable->capacity;
 
-    HASHTABLE new_hashtable;
-    u8 r = HASHTABLE_init(&new_hashtable, new_capacity);
+    HASHTABLE_u64_u64 new_hashtable;
+    u8 r = HASHTABLE_u64_u64_init(&new_hashtable, new_capacity);
     if (r == 0) return 0;
 
     for (u32 i = 0; i < hashtable->capacity; i++) {
-        const HASHTABLE_ENTRY* entry = hashtable->entries + i;
+        const HASHTABLE_ENTRY_u64_u64* entry = hashtable->entries + i;
         const u8 status = entry->status;
 
         if (status == HASHTABLE_ENTRY_STATUS_EMPTY || status == HASHTABLE_ENTRY_STATUS_TOMBSTONE) continue;
-        r = HASHTABLE_quick_add(&new_hashtable, entry->hash, entry->key, entry->value);
+        r = HASHTABLE_u64_u64_quick_add(&new_hashtable, entry->hash, entry->key, entry->value);
         if (r == 0) {
-            HASHTABLE_deinit(&new_hashtable);
+            HASHTABLE_u64_u64_deinit(&new_hashtable);
             return 0;
         }
     }
@@ -86,19 +88,19 @@ u8 HASHTABLE_grow(HASHTABLE* hashtable) {
     return 1;
 }
 
-u8 HASHTABLE_quick_add(HASHTABLE* hashtable, const u32 hash, const u32 key, const u32 value) {
+u8 HASHTABLE_u64_u64_quick_add(HASHTABLE_u64_u64* hashtable, const u32 hash, const u64 key, const u64 value) {
     if (hashtable == NULL) return 0;
 
     if ((hashtable->size + 0.0) / hashtable->capacity >= HASHTABLE_MAX_LOAD_FACTOR) {
-        const u8 r = HASHTABLE_grow(hashtable);
+        const u8 r = HASHTABLE_u64_u64_grow(hashtable);
         if (r == 0) return 0;
     }
 
     u32 i = hash % hashtable->capacity;
 
-    HASHTABLE_ENTRY* found_entry = NULL;
+    HASHTABLE_ENTRY_u64_u64* found_entry = NULL;
     do {
-        HASHTABLE_ENTRY* entry = hashtable->entries + i;
+        HASHTABLE_ENTRY_u64_u64* entry = hashtable->entries + i;
         const u8 status = entry->status;
 
         if (status == HASHTABLE_ENTRY_STATUS_EMPTY || status == HASHTABLE_ENTRY_STATUS_TOMBSTONE) {
@@ -121,45 +123,45 @@ u8 HASHTABLE_quick_add(HASHTABLE* hashtable, const u32 hash, const u32 key, cons
     return 1;
 }
 
-u8 HASHTABLE_add(HASHTABLE* hashtable, const u32 key, const u32 value) {
+u8 HASHTABLE_u64_u64_add(HASHTABLE_u64_u64* hashtable, const u64 key, const u64 value) {
     if (hashtable == NULL) return 0;
 
     const u32 hash = HASH_fnv1a((u8*)(&key), sizeof(key));
-    return HASHTABLE_quick_add(hashtable, hash, key, value);
+    return HASHTABLE_u64_u64_quick_add(hashtable, hash, key, value);
 }
 
-void HASHTABLE_remove(HASHTABLE* hashtable, const u32 key) {
+void HASHTABLE_u64_u64_remove(HASHTABLE_u64_u64* hashtable, const u64 key) {
     if (hashtable == NULL) return;
 
-    HASHTABLE_ENTRY* entry = HASHTABLE_find(hashtable, key);
+    HASHTABLE_ENTRY_u64_u64* entry = HASHTABLE_u64_u64_find(hashtable, key);
     if (entry == NULL) return;
 
-    memset(entry, 0, sizeof(HASHTABLE_ENTRY));
+    memset(entry, 0, sizeof(HASHTABLE_ENTRY_u64_u64));
     entry->status = HASHTABLE_ENTRY_STATUS_TOMBSTONE;
     hashtable->size--;
     hashtable->tombstones++;
 }
 
-u32 HASHTABLE_hash(const u8* data, const u32 size) {
+u32 HASHTABLE_u64_u64_hash(const u8* data, const u32 size) {
     return HASH_fnv1a(data, size);
 }
 
-u8 HASHTABLE_contains(const HASHTABLE* hashtable, const u32 key) {
+u8 HASHTABLE_u64_u64_contains(const HASHTABLE_u64_u64* hashtable, const u64 key) {
     if (hashtable == NULL) return 0;
 
-    const HASHTABLE_ENTRY* entry = HASHTABLE_find(hashtable, key);
+    const HASHTABLE_ENTRY_u64_u64* entry = HASHTABLE_u64_u64_find(hashtable, key);
     if (entry == NULL) return 0;
     return 1;
 }
 
-HASHTABLE_ENTRY* HASHTABLE_find(const HASHTABLE* hashtable, const u32 key) {
+HASHTABLE_ENTRY_u64_u64* HASHTABLE_u64_u64_find(const HASHTABLE_u64_u64* hashtable, const u64 key) {
     if (hashtable == NULL) return NULL;
 
     // Determine the key_size
     const u32 hash = HASH_fnv1a((u8*)(&key), sizeof(key));
     u32 i = hash % hashtable->capacity;
 
-    HASHTABLE_ENTRY* entry;
+    HASHTABLE_ENTRY_u64_u64* entry;
     u8 status;
 
     do {

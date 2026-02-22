@@ -1,18 +1,19 @@
 #include <stdio.h>
 
-#include "hash/hashset.h"
+#include "hash/hashtable.h"
 
-HASHSET_DECLARE(u64)
-HASHSET_DEFINE(u64)
+HASHTABLE_DECLARE(u64, u64)
+HASHTABLE_DEFINE(u64, u64)
 
 int main() {
-    HASHSET_u64* a = HASHSET_u64_create(10);
+    HASHTABLE_u64_u64* a = HASHTABLE_u64_u64_create(10);
 
-    HASHSET_u64_add(a, 19);
-    HASHSET_u64_add(a, 20);
-    HASHSET_u64_add(a, 20);
+    HASHTABLE_u64_u64_add(a, 10, 10);
+    HASHTABLE_u64_u64_add(a, 12, 10);
+    HASHTABLE_u64_u64_add(a, 13, 10);
+    HASHTABLE_u64_u64_add(a, 14, 10);
 
-    HASHSET_u64_destroy(a);
+    HASHTABLE_u64_u64_destroy(a);
 
     return 0;
 }
