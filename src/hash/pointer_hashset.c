@@ -4,10 +4,12 @@
 #include "hash/hash.h"
 #include "hash/pointer_hashset.h"
 
-u8 POINTER_HASHSET_init(POINTER_HASHSET* hashset,
+POINTER_HASHSET_DECLARE(u64)
+
+u8 POINTER_HASHSET_u64_init(POINTER_HASHSET_u64* hashset,
                   const u32 capacity,
-                  u32 (*key_size)(const char*),
-                  u8 (*key_equal)(const char*, const char*)) {
+                  u32 (*key_size)(const u64*),
+                  u8 (*key_equal)(const u64*, const u64*)) {
 
     if (hashset == NULL) return 0;
 
@@ -18,25 +20,25 @@ u8 POINTER_HASHSET_init(POINTER_HASHSET* hashset,
     hashset->key_size = key_size;
     hashset->key_equal = key_equal;
 
-    hashset->entries = (POINTER_HASHSET_ENTRY*)malloc(sizeof(POINTER_HASHSET_ENTRY) * capacity);
+    hashset->entries = (POINTER_HASHSET_ENTRY_u64*)malloc(sizeof(POINTER_HASHSET_ENTRY_u64) * capacity);
     if (hashset->entries == NULL) {
         hashset->capacity = 0;
         return 0;
     }
 
-    memset(hashset->entries, 0, sizeof(POINTER_HASHSET_ENTRY) * capacity);
+    memset(hashset->entries, 0, sizeof(POINTER_HASHSET_ENTRY_u64) * capacity);
 
     return 1;
 }
 
-POINTER_HASHSET* POINTER_HASHSET_create(const u32 capacity,
-    u32 (*key_size)(const char*),
-    u8 (*key_equal)(const char*, const char*)) {
+POINTER_HASHSET_u64* POINTER_HASHSET_create(const u32 capacity,
+    u32 (*key_size)(const u64*),
+    u8 (*key_equal)(const u64*, const u64*)) {
 
-    POINTER_HASHSET* hashset = (POINTER_HASHSET*)malloc(sizeof(POINTER_HASHSET));
+    POINTER_HASHSET_u64* hashset = (POINTER_HASHSET_u64*)malloc(sizeof(POINTER_HASHSET_u64));
     if (hashset == NULL) return NULL;
 
-    const u8 r = POINTER_HASHSET_init(hashset, capacity, key_size, key_equal);
+    const u8 r = POINTER_HASHSET_u64_init(hashset, capacity, key_size, key_equal);
     if (r == 0) {
         free(hashset);
         return NULL;
@@ -45,7 +47,7 @@ POINTER_HASHSET* POINTER_HASHSET_create(const u32 capacity,
     return hashset;
 }
 
-void POINTER_HASHSET_deinit(POINTER_HASHSET* hashset) {
+void POINTER_HASHSET_u64_deinit(POINTER_HASHSET_u64* hashset) {
     if (hashset == NULL) return;
     hashset->size = 0;
     hashset->capacity = 0;
@@ -60,31 +62,31 @@ void POINTER_HASHSET_deinit(POINTER_HASHSET* hashset) {
     }
 }
 
-void POINTER_HASHSET_destroy(POINTER_HASHSET* hashset) {
+void POINTER_HASHSET_u64_destroy(POINTER_HASHSET_u64* hashset) {
     if (hashset == NULL) return;
 
-    POINTER_HASHSET_deinit(hashset);
+    POINTER_HASHSET_u64_deinit(hashset);
     free(hashset);
 }
 
-u8 POINTER_HASHSET_grow(POINTER_HASHSET* hashset) {
+u8 POINTER_HASHSET_u64_grow(POINTER_HASHSET_u64* hashset) {
     if (hashset == NULL) return 0;
 
     u32 new_capacity = (u32)(hashset->capacity * POINTER_HASHSET_MAX_LOAD_FACTOR / POINTER_HASHSET_MIN_LOAD_FACTOR);
     new_capacity = (new_capacity > hashset->capacity) ? new_capacity : hashset->capacity;
 
-    POINTER_HASHSET new_hashset;
-    u8 r = POINTER_HASHSET_init(&new_hashset, new_capacity, hashset->key_size, hashset->key_equal);
+    POINTER_HASHSET_u64 new_hashset;
+    u8 r = POINTER_HASHSET_u64_init(&new_hashset, new_capacity, hashset->key_size, hashset->key_equal);
     if (r == 0) return 0;
 
     for (u32 i = 0; i < hashset->capacity; i++) {
-        const POINTER_HASHSET_ENTRY* entry = hashset->entries + i;
+        const POINTER_HASHSET_ENTRY_u64* entry = hashset->entries + i;
         const u8 status = entry->status;
 
         if (status == POINTER_HASHSET_ENTRY_STATUS_EMPTY || status == POINTER_HASHSET_ENTRY_STATUS_TOMBSTONE) continue;
-        r = POINTER_HASHSET_quick_add(&new_hashset, entry->hash, entry->key);
+        r = POINTER_HASHSET_u64_quick_add(&new_hashset, entry->hash, entry->key);
         if (r == 0) {
-            POINTER_HASHSET_deinit(&new_hashset);
+            POINTER_HASHSET_u64_deinit(&new_hashset);
             return 0;
         }
     }
@@ -97,19 +99,19 @@ u8 POINTER_HASHSET_grow(POINTER_HASHSET* hashset) {
     return 1;
 }
 
-u8 POINTER_HASHSET_quick_add(POINTER_HASHSET* hashset, const u32 hash, char* key) {
+u8 POINTER_HASHSET_u64_quick_add(POINTER_HASHSET_u64* hashset, const u32 hash, u64* key) {
     if (hashset == NULL) return 0;
 
     if ((hashset->size + 0.0) / hashset->capacity >= POINTER_HASHSET_MAX_LOAD_FACTOR) {
-        const u8 r = POINTER_HASHSET_grow(hashset);
+        const u8 r = POINTER_HASHSET_u64_grow(hashset);
         if (r == 0) return 0;
     }
 
     u32 i = hash % hashset->capacity;
 
-    POINTER_HASHSET_ENTRY* found_entry = NULL;
+    POINTER_HASHSET_ENTRY_u64* found_entry = NULL;
     do {
-        POINTER_HASHSET_ENTRY* entry = hashset->entries + i;
+        POINTER_HASHSET_ENTRY_u64* entry = hashset->entries + i;
         const u8 status = entry->status;
 
         if (status == POINTER_HASHSET_ENTRY_STATUS_EMPTY || status == POINTER_HASHSET_ENTRY_STATUS_TOMBSTONE) {
@@ -132,40 +134,40 @@ u8 POINTER_HASHSET_quick_add(POINTER_HASHSET* hashset, const u32 hash, char* key
     return 1;
 }
 
-u8 POINTER_HASHSET_add(POINTER_HASHSET* hashset, char* key) {
+u8 POINTER_HASHSET_u64_add(POINTER_HASHSET_u64* hashset, u64* key) {
     if (hashset == NULL) return 0;
 
     const u32 key_size = hashset->key_size(key);
     const u32 hash = HASH_fnv1a((u8*)key, key_size);
 
-    return POINTER_HASHSET_quick_add(hashset, hash, key);
+    return POINTER_HASHSET_u64_quick_add(hashset, hash, key);
 }
 
-void POINTER_HASHSET_remove(POINTER_HASHSET* hashset, const char* key) {
+void POINTER_HASHSET_u64_remove(POINTER_HASHSET_u64* hashset, const u64* key) {
     if (hashset == NULL) return;
 
-    POINTER_HASHSET_ENTRY* entry = POINTER_HASHSET_find(hashset, key);
+    POINTER_HASHSET_ENTRY_u64* entry = POINTER_HASHSET_u64_find(hashset, key);
     if (entry == NULL) return;
 
-    memset(entry, 0, sizeof(POINTER_HASHSET_ENTRY));
+    memset(entry, 0, sizeof(POINTER_HASHSET_ENTRY_u64));
     entry->status = POINTER_HASHSET_ENTRY_STATUS_TOMBSTONE;
     hashset->size--;
     hashset->tombstones++;
 }
 
-u32 POINTER_HASHSET_hash(const u8* data, const u32 size) {
+u32 POINTER_HASHSET_u64_hash(const u8* data, const u32 size) {
     return HASH_fnv1a(data, size);
 }
 
-u8 POINTER_HASHSET_contains(const POINTER_HASHSET* hashset, const char* key) {
+u8 POINTER_HASHSET_u64_contains(const POINTER_HASHSET_u64* hashset, const u64* key) {
     if (hashset == NULL) return 0;
 
-    const POINTER_HASHSET_ENTRY* entry = POINTER_HASHSET_find(hashset, key);
+    const POINTER_HASHSET_ENTRY_u64* entry = POINTER_HASHSET_u64_find(hashset, key);
     if (entry == NULL) return 0;
     return 1;
 }
 
-POINTER_HASHSET_ENTRY* POINTER_HASHSET_find(const POINTER_HASHSET* hashset, const char* key) {
+POINTER_HASHSET_ENTRY_u64* POINTER_HASHSET_u64_find(const POINTER_HASHSET_u64* hashset, const u64* key) {
     if (hashset == NULL) return NULL;
 
     // Determine the key_size
@@ -174,7 +176,7 @@ POINTER_HASHSET_ENTRY* POINTER_HASHSET_find(const POINTER_HASHSET* hashset, cons
 
     u32 i = hash % hashset->capacity;
 
-    POINTER_HASHSET_ENTRY* entry;
+    POINTER_HASHSET_ENTRY_u64* entry;
     u8 status;
 
     do {
