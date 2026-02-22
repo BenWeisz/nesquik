@@ -8,8 +8,8 @@ add_executable(nesquik main.c
         src/hash/hash.c
 #        src/hash/hashtable.c
 #        src/hash/hashset.c
-        src/hash/pointer_hashtable.c
-        src/hash/pointer_hashset.c
+#        src/hash/pointer_hashtable.c
+#        src/hash/pointer_hashset.c
         src/heap/heap.c)
         # src/state_machine/state_machine.c)
 
