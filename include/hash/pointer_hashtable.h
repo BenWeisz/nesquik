@@ -151,7 +151,7 @@
         return 1;                                                                                                                           \
     }                                                                                                                                       \
                                                                                                                                             \
-    u8 POINTER_HASHTABLE_##K##_##V##_quick_add(POINTER_HASHTABLE_##K##_##V* hashtable, const u32 hash, K* key, u32 value) {                 \
+    u8 POINTER_HASHTABLE_##K##_##V##_quick_add(POINTER_HASHTABLE_##K##_##V* hashtable, const u32 hash, K* key, V value) {                   \
         if (hashtable == NULL) return 0;                                                                                                    \
                                                                                                                                             \
         if ((hashtable->size + 0.0) / hashtable->capacity >= POINTER_HASHTABLE_MAX_LOAD_FACTOR) {                                           \
@@ -187,7 +187,7 @@
         return 1;                                                                                                                           \
     }                                                                                                                                       \
                                                                                                                                             \
-    u8 POINTER_HASHTABLE_##K##_##V##_add(POINTER_HASHTABLE_##K##_##V* hashtable, K* key, u32 value) {                                       \
+    u8 POINTER_HASHTABLE_##K##_##V##_add(POINTER_HASHTABLE_##K##_##V* hashtable, K* key, V value) {                                         \
         if (hashtable == NULL) return 0;                                                                                                    \
                                                                                                                                             \
         const u32 key_size = hashtable->key_size(key);                                                                                      \
