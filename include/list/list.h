@@ -29,7 +29,7 @@
     u8 LIST_##T##_set(const LIST_##T* list, u32 i, T v);
 
 #define LIST_DEFINE(T)                                                                      \
-    u8 LIST_##T##_init(LIST_##T* list, u32 capacity) {                                            \
+    u8 LIST_##T##_init(LIST_##T* list, u32 capacity) {                                      \
         if (list == NULL) return 0;                                                         \
                                                                                             \
         list->size = 0;                                                                     \
