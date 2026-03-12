@@ -2,7 +2,9 @@
 
 #include <stdlib.h>
 
-u8 LIST_init(LIST* list, u32 capacity) {
+LIST_DECLARE(u8)
+
+u8 LIST_u8_init(LIST_u8* list, u32 capacity) {
     if (list == NULL) return 0;
 
     list->size = 0;
@@ -17,13 +19,13 @@ u8 LIST_init(LIST* list, u32 capacity) {
     return 1;
 }
 
-LIST* LIST_create(const u32 capacity) {
-    LIST* list = (LIST*)malloc(sizeof(LIST));
+LIST_u8* LIST_u8_create(const u32 capacity) {
+    LIST_u8* list = (LIST_u8*)malloc(sizeof(LIST_u8));
     if (list == NULL) {
         return NULL;
     }
 
-    const u8 r = LIST_init(list, capacity);
+    const u8 r = LIST_u8_init(list, capacity);
     if (r == 0) {
         free(list);
         return NULL;
@@ -32,7 +34,7 @@ LIST* LIST_create(const u32 capacity) {
     return list;
 }
 
-void LIST_deinit(LIST* list) {
+void LIST_u8_deinit(LIST_u8* list) {
     if (list == NULL) return;
 
     list->size = 0;
@@ -43,14 +45,14 @@ void LIST_deinit(LIST* list) {
     }
 }
 
-void LIST_destroy(LIST* list) {
+void LIST_u8_destroy(LIST_u8* list) {
     if (list == NULL) return;
 
-    LIST_deinit(list);
+    LIST_u8_deinit(list);
     free(list);
 }
 
-u8 LIST_grow_capacity(LIST* list) {
+u8 LIST_u8_grow_capacity(LIST_u8* list) {
     if (list == NULL) return 0;
 
     if (list->capacity == 0xFFFFFFFF) return 0;
@@ -79,12 +81,12 @@ u8 LIST_grow_capacity(LIST* list) {
     return 1;
 }
 
-u8 LIST_push(LIST* list, u8 v) {
+u8 LIST_u8_push(LIST_u8* list, u8 v) {
     if (list == NULL) return 0;
     if (list->size == 0xFFFFFFFF) return 0;
 
     if (list->size + 1 > list->capacity) {
-        const u8 r = LIST_grow_capacity(list);
+        const u8 r = LIST_u8_grow_capacity(list);
         if (r == 0) return 0;
     }
 
@@ -92,7 +94,7 @@ u8 LIST_push(LIST* list, u8 v) {
     return 1;
 }
 
-u8 LIST_pop(LIST* list) {
+u8 LIST_u8_pop(LIST_u8* list) {
     if (list == NULL) return 0;
     if (list->size == 0) return 0;
 
@@ -100,7 +102,7 @@ u8 LIST_pop(LIST* list) {
     return 1;
 }
 
-u8 LIST_popv(LIST* list, u8* v) {
+u8 LIST_u8_popv(LIST_u8* list, u8* v) {
     if (list == NULL) return 0;
     if (list->size == 0) return 0;
 
@@ -108,7 +110,7 @@ u8 LIST_popv(LIST* list, u8* v) {
     return 1;
 }
 
-u8 LIST_get(const LIST* list, u32 i, u8* v) {
+u8 LIST_u8_get(const LIST_u8* list, u32 i, u8* v) {
     if (list == NULL) return 0;
     if (i >= list->size) return 0;
 
@@ -116,7 +118,7 @@ u8 LIST_get(const LIST* list, u32 i, u8* v) {
     return 1;
 }
 
-u8 LIST_set(const LIST* list, u32 i, u8 v) {
+u8 LIST_u8_set(const LIST_u8* list, u32 i, u8 v) {
     if (list == NULL) return 0;
     if (i >= list->size) return 0;
 

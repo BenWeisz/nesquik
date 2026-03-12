@@ -1,11 +1,13 @@
 #include <stdio.h>
 
-#include "hash/pointer_hashset.h"
+#include "list/list.h"
 
-POINTER_HASHSET_DECLARE(int)
-POINTER_HASHSET_DEFINE(int)
+LIST_DECLARE(u8)
+LIST_DEFINE(u8)
 
 int main() {
+    LIST_u8* list = NULL;
+
     return 0;
 }
 
