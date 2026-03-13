@@ -25,21 +25,18 @@ typedef struct {
     u8* buf;
     u32 buf_len;
 
-    // User context
-    void* context;
-
     // A mapping from states to their transition functions
     POINTER_HASHTABLE_STATE_TRANSITION_F state_transition_table;
 } STATE_MACHINE;
 
-u8 STATE_MACHINE_init(STATE_MACHINE* state_machine, u8* buf, const u32 buf_len, void* context);
-STATE_MACHINE* STATE_MACHINE_create(u8* buf, const u32 buf_len, void* context);
+u8 STATE_MACHINE_init(STATE_MACHINE* state_machine, u8* buf, const u32 buf_len);
+STATE_MACHINE* STATE_MACHINE_create(u8* buf, const u32 buf_len);
 
 void STATE_MACHINE_deinit(STATE_MACHINE* state_machine);
 void STATE_MACHINE_destroy(STATE_MACHINE* state_machine);
 
 u8 STATE_MACHINE_add_state(STATE_MACHINE* state_machine, STATE* state, TRANSITION_F transition_f);
-STATE* STATE_MACHINE_run(STATE_MACHINE* state_machine);
+STATE* STATE_MACHINE_run(STATE_MACHINE* state_machine, void* context);
 
 u32 STATE_key_size(const STATE* state);
 u8 STATE_key_equal(const STATE* a, const STATE* b);
