@@ -3,14 +3,8 @@ project(nesquik C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(nesquik main.c
-        #src/list/list.c
-        src/hash/hash.c
-#        src/hash/hashtable.c
-#        src/hash/hashset.c
-#        src/hash/pointer_hashtable.c
-#        src/hash/pointer_hashset.c
-#        src/heap/heap.c
-        src/state_machine/state_machine.c)
+add_library(nesquik
+    src/hash/hash.c
+    src/state_machine/state_machine.c)
 
 target_include_directories(nesquik PUBLIC include)
